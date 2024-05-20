@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio to Text Conversion</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-top: 50px;
+        }
+        form {
+            margin-top: 20px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        label.choose-file {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: inline-block;
+        }
+        label.choose-file:hover {
+            background-color: #2980b9;
+        }
+        span.file-name {
+            display: block;
+            margin-top: 10px;
+            color: #ccc; /* Changed color to make it more visible */
+        }
+        button.transcribe {
+            background-color: #2ecc71;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        button.transcribe:hover {
+            background-color: #27ae60;
+        }
+        button.download {
+            background-color: #9b59b6;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 20px;
+        }
+        button.download:hover {
+            background-color: #8e44ad;
+        }
+        #transcriptionResult {
+            margin-top: 50px;
+        }
+        #transcriptText {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #fff; /* Changed background color to white */
+            color: #000; /* Changed text color to black */
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            overflow-wrap: break-word;
+        }
+        #loading {
+            margin-top: 50px;
+            font-size: 2rem;
+        }
+        #loading .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Audio to Text Conversion</h1>
+        <form id="transcriptionForm" action="#" method="post" enctype="multipart/form-data">
+            <label for="audio_file" class="choose-file">Choose Audio File<input type="file" id="audio_file" name="audio_file" accept="audio/*" onchange="displayFileName()"></label>
+            <span id="fileName" class="file-name"></span><br>
+            <button type="button" class="transcribe" onclick="transcribe()">Transcribe</button>
+        </form>
+        <div id="transcriptionResult" style="display:none;">
+            <h2>Transcription:</h2>
+            <div id="transcriptText"></div>
+            <div style="margin-top: 20px;">
+                <button onclick="downloadTranscript()" class="download">Download Transcript</button>
+            </div>
+        </div>
+        <div id="loading" style="display: none;">
+            <div class="spinner"></div> Transcribing...
+        </div>
+    </div>
+
+    <script>
+        function displayFileName() {
+            var fileName = document.getElementById('audio_file').files[0].name;
+            document.getElementById('fileName').innerText = "Selected File: " + fileName;
+        }
+
+        function transcribe() {
+            if (!document.getElementById('audio_file').value) {
+                alert('Please select a file.');
+                return;
+            }
+            var formData = new FormData(document.getElementById('transcriptionForm'));
+            document.getElementById('loading').style.display = 'block';
+
+            fetch('/transcribe', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                if (data.transcript) {
+                    document.getElementById('transcriptText').innerText = data.transcript;
+                    document.getElementById('transcriptionResult').style.display = 'block';
+                } else {
+                    alert(data.error);
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading').style.display = 'none';
+                alert('An error occurred. Please try again later.');
+                console.error('Error:', error);
+            });
+        }
+
+        function downloadTranscript() {
+            var transcript = document.getElementById('transcriptText').innerText;
+            var blob = new Blob([transcript], { type: 'text/plain' });
+            var downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(blob);
+            var fileName = prompt("Enter file name:", "transcript.txt");
+            if (fileName) {
+                downloadLink.download = fileName;
+                downloadLink.click();
+            }
+        }
+    </script>
+</body>
+</html>
